@@ -197,3 +197,10 @@ body { background: var(--pearl); color: var(--graphite); font: 400 17px/1.6 var(
   .mirror--b::after { animation-delay: 1.7s; }
   @keyframes sheen { 0% { background-position: 150% 0; } 18%, 100% { background-position: -50% 0; } }
 }
+
+/* Фон секции: ИИ-текстура (Cloudflare Workers AI) под заливкой цвета сайта — декор, не фото бизнеса.
+   На компьютере картинка закреплена за окном — при прокрутке секция работает как окно (параллакс). */
+.reviews { background: linear-gradient(color-mix(in srgb, var(--aqua-soft) 70%, transparent), color-mix(in srgb, var(--aqua-soft) 85%, transparent)), url('img/bg-reviews.webp') center / cover var(--aqua-soft); }
+@media (hover: hover) and (pointer: fine) {
+  .reviews { background-attachment: scroll, fixed; }
+}
