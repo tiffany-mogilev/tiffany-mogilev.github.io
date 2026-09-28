@@ -231,6 +231,63 @@
     document.querySelectorAll('[data-year]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
   }
 
+  // Вау-слой: сами анимации — в base.css, здесь только разметка целей и «магнитные» кнопки.
+  function initWow() {
+    if (!window.matchMedia('(prefers-reduced-motion: no-preference)').matches) return;
+    var main = document.querySelector('main');
+    if (main && window.CSS && CSS.supports('animation-timeline: view()')) {
+      var cta = document.querySelector('.header__cta') || document.querySelector('.btn');
+      var bar = document.createElement('div');
+      bar.className = 'wow-progress';
+      var color = cta && getComputedStyle(cta).backgroundColor;
+      if (color && color !== 'rgba(0, 0, 0, 0)') bar.style.setProperty('--wow-accent', color);
+      document.body.appendChild(bar);
+
+      // Сначала всё читаем, потом всё пишем — иначе браузер пересчитывает раскладку на каждом шаге.
+      var own = function (el) { return getComputedStyle(el).animationName !== 'none'; };
+      var imgs = [].filter.call(main.querySelectorAll('section:not(.hero) img'), function (img) {
+        return !own(img) && getComputedStyle(img).clipPath === 'none';
+      });
+      // Ряд однотипных блоков (карточки, пункты, отзывы): 3–12 детей с одним тегом и первым классом.
+      var groups = [];
+      main.querySelectorAll('section:not(.hero) *').forEach(function (box) {
+        var kids = box.children;
+        if (kids.length < 3 || kids.length > 12 || box instanceof SVGElement || box.closest('form')) return;
+        var sig = kids[0].tagName + ' ' + (kids[0].classList[0] || '');
+        if (getComputedStyle(kids[0]).display.indexOf('inline') === 0) return;
+        for (var k = 0; k < kids.length; k++) {
+          if (kids[k].tagName + ' ' + (kids[k].classList[0] || '') !== sig || own(kids[k])) return;
+        }
+        groups.push([].map.call(kids, function (el) { return [el, el.offsetTop]; }));
+      });
+
+      imgs.forEach(function (img) { img.classList.add('wow-img'); });
+      groups.forEach(function (g) {
+        var i = 0;
+        g.forEach(function (p, k) {
+          i = k && p[1] === g[k - 1][1] ? i + 1 : 0;
+          p[0].classList.add('wow-item');
+          p[0].style.setProperty('--i', Math.min(i, 3));
+        });
+      });
+    }
+
+    // Кнопка тянется за курсором. translate, а не transform, — :hover из site.css продолжает работать.
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    document.querySelectorAll('.btn').forEach(function (b) {
+      b.addEventListener('pointermove', function (e) {
+        var r = b.getBoundingClientRect();
+        b.style.translate = ((e.clientX - r.left - r.width / 2) * .2).toFixed(1) + 'px ' +
+          ((e.clientY - r.top - r.height / 2) * .3).toFixed(1) + 'px';
+      });
+      b.addEventListener('pointerleave', function () {
+        var from = b.style.translate;
+        b.style.translate = '';
+        if (from && b.animate) b.animate({ translate: [from, '0px 0px'] }, { duration: 450, easing: 'cubic-bezier(.2, .7, .1, 1)' });
+      });
+    });
+  }
+
   // Если сайт открыли внутри чужого iframe — выходим из него (на GitHub Pages заголовки не выставить).
   if (window.self !== window.top) { try { window.top.location = window.self.location; } catch (e) { /* ничего */ } }
 
@@ -242,6 +299,7 @@
     initGoals();
     initCookies();
     initYear();
+    initWow();
     document.dispatchEvent(new CustomEvent('site:ready'));
   }
 

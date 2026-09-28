@@ -48,3 +48,53 @@ h1, h2, h3, h4, p, figure, blockquote, ul, ol, dl, dd { margin: 0; }
     transition-duration: .01ms !important; scroll-behavior: auto !important;
   }
 }
+
+/* Вау-слой: появление героя, проявление блоков при прокрутке, полоса прогресса.
+   Анимации привязаны к прокрутке средствами CSS; где браузер их не умеет (Firefox) — страница статичная.
+   Двигаем свойствами translate/scale, а не transform, — чтобы не перебить трансформы и :hover из site.css.
+   Цели wow-img и wow-item размечает движок (initWow): только то, у чего нет своей анимации. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(.hero__place, .hero__kicker, .hero__title, .hero__lead, .hero__ctas, .hero__proof, .hero__hours) {
+    animation: wow-rise 1s cubic-bezier(.2, .7, .1, 1) both;
+  }
+  :where(.hero__title) { animation-delay: .1s; }
+  :where(.hero__lead) { animation-delay: .25s; }
+  :where(.hero__ctas) { animation-delay: .4s; }
+  :where(.hero__proof, .hero__hours) { animation-delay: .55s; }
+  @keyframes wow-rise { from { opacity: 0; translate: 0 28px; } }
+
+  @supports (animation-timeline: view()) {
+    .wow-progress {
+      position: fixed; inset: 0 0 auto; z-index: 70; height: 3px; pointer-events: none;
+      background: var(--wow-accent, currentColor); transform-origin: 0 50%;
+      animation: wow-grow linear both; animation-timeline: scroll(root);
+    }
+    @keyframes wow-grow { from { scale: 0 1; } to { scale: 1 1; } }
+
+    main section:not(.hero) :where(.h2) {
+      animation: wow-title linear both; animation-timeline: view(); animation-range: entry 0% cover 25%;
+    }
+    @keyframes wow-title {
+      from { opacity: 0; translate: 0 .4em; clip-path: inset(0 0 100% 0); }
+      to { clip-path: inset(-.3em -.3em -.4em -.3em); }
+    }
+    main section:not(.hero) :where(.section-lead) {
+      animation: wow-rise linear both; animation-timeline: view(); animation-range: entry 0% cover 22%;
+    }
+    .wow-img { animation: wow-img linear both; animation-timeline: view(); animation-range: entry 0% cover 35%; }
+    @keyframes wow-img { from { clip-path: inset(10%); scale: 1.12; } to { clip-path: inset(0); scale: 1; } }
+    /* --i — место карточки в своём ряду: ряд проявляется волной слева направо. */
+    .wow-item {
+      animation: wow-rise linear both; animation-timeline: view();
+      animation-range: entry calc(var(--i, 0) * 15%) cover calc(18% + var(--i, 0) * 6%);
+    }
+
+    /* Глубина на первом экране: картинка уезжает быстрее текста, текст гаснет. Только на широком экране. */
+    @media (min-width: 900px) {
+      .hero :where(.hero__copy) { animation: wow-away linear both; animation-timeline: scroll(root); animation-range: 0 90vh; }
+      .hero :where(.hero__copy ~ *) { animation: wow-lift linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+      @keyframes wow-away { to { opacity: .2; translate: 0 -4vh; } }
+      @keyframes wow-lift { to { translate: 0 -12vh; } }
+    }
+  }
+}
